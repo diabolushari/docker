@@ -30,9 +30,10 @@ pipeline{
                 archiveArtifacts artifacts: 'target/*.war', fingerprint: true
             }
         }
-        stage('Copy Artifact to Local Folder') {
+        stage('Copy Artifact to Local Folder and app floder') {
             steps {
                 bat 'copy target\\*.war D:\\Study\\P1\\Myartifacts\\'
+                bat "copy target\\vprofile-v2.war Docker-files\\app\\vprofile-v2.war"
             }
         }
         stage('Prepare WAR for Docker') {
@@ -45,12 +46,6 @@ pipeline{
                 bat 'docker rm -f %CONTAINER_NAME% || exit 0'
             }
         }
-        stage('Move WAR to App Folder') {
-            steps {
-                bat "copy target\\*.war ${WAR_DEST_PATH}\\myapp.war"
-            }
-        }
-
         stage('Stop Previous Containers') {
             steps {
                 bat 'docker-compose down || exit 0'
