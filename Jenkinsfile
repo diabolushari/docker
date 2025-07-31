@@ -33,7 +33,7 @@ pipeline{
         stage('Copy Artifact to Local Folder and app floder') {
             steps {
                 bat 'copy target\\*.war D:\\Study\\P1\\Myartifacts\\'
-                bat "copy target\\vprofile-v2.war Docker-files\\app\\vprofile-v2.war"
+                bat "copy target\\vprofile-v2.war Docker-files\\app\\ROOT.war"
             }
         }
         stage('Prepare WAR for Docker') {
