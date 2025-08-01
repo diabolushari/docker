@@ -1,53 +1,72 @@
-pipeline {
-    
-	agent any	
-	tools {
-        maven "MAVEN3.9"
-    }	
-    environment {
-        // Nexus and SonarQube variables removed
-        ARTVERSION = "${env.BUILD_ID}"
+pipeline{
+    agent any
+    tools {
+        maven 'MAVEN3.9'
     }
-	
+    environment {
+        DOCKER_IMAGE = "vpro-app-image"
+        CONTAINER_NAME = "vpro-container"
+        WAR_DEST_PATH = "Docker-files/app"
+    }
+
     stages {
-        stage('BUILD') {
+        stage('Fetch Code') {
             steps {
-                bat 'mvn clean install -DskipTests'
-            }
-            post {
-                success {
-                    echo 'Now Archiving...'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
+                git branch: 'master', url: 'https://github.com/diabolushari/docker.git'
             }
         }
-        stage('UNIT TEST') {
+        stage('Build') {
+            steps {
+                bat 'mvn install -DskipTests'
+            }
+        }
+        stage('Unit Test') {
             steps {
                 bat 'mvn test'
             }
         }
-
-        stage('DOCKER COMPOSE UP (LOCAL)') {
+        stage('Archive Artifact') {
             steps {
-                bat 'docker-compose up -d'
+                archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+            }
+        }
+        stage('Copy Artifact to Local Folder and app floder') {
+            steps {
+                bat 'copy target\\*.war D:\\Study\\P1\\Myartifacts\\'
+                bat "copy target\\vprofile-v2.war Docker-files\\app\\ROOT.war"
+            }
+        }
+        stage('Prepare WAR for Docker') {
+            steps {
+                bat 'copy target\\*.war myapp.war'
+            }
+        }
+        stage('Clean Previous Container') {
+            steps {
+                bat 'docker rm -f %CONTAINER_NAME% || exit 0'
+            }
+        }
+        stage('Stop Previous Containers') {
+            steps {
+                bat 'docker-compose down || exit 0'
             }
         }
 
-	    stage('INTEGRATION TEST') {
+        stage('Start with Docker Compose') {
             steps {
-                bat 'mvn verify -DskipUnitTests'
+                bat 'docker-compose up --build -d'
             }
         }
-		
-        stage ('CODE ANALYSIS WITH CHECKSTYLE') {
-            steps {
-                bat 'mvn checkstyle:checkstyle'
-            }
-            post {
-                success {
-                    echo 'Generated Analysis Result'
-                }
-            }
+    }    
+    post {
+        success {
+            echo "Deployment successful! App running on http://<jenkins-host>:8080"
         }
-    }
+        failure {
+            echo "Pipeline failed."
+        }
+        always {
+            bat 'docker-compose up -d'
+        }
+    }  
 }
