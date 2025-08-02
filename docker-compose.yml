@@ -10,6 +10,11 @@ services:
       - vprodbdata:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=vprodbpass
+      - MYSQL_DATABASE=accounts
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   vprocache01:
     image: memcached
@@ -32,9 +37,18 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - vprodb
-      - vprocache01
-      - vpromq01
+      vprodb:
+        condition: service_healthy
+      vprocache01:
+        condition: service_started
+      vpromq01:
+        condition: service_started
+    environment:
+      - DB_HOST=vprodb
+      - DB_PORT=3306
+      - DB_NAME=accounts
+      - DB_USER=root
+      - DB_PASS=vprodbpass
     
   vproweb:
     build: 

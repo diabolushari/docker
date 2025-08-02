@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-test
+  namespace: vprofile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stress-test
+  template:
+    metadata:
+      labels:
+        app: stress-test
+    spec:
+      containers:
+      - name: stress-test
+        image: busybox:latest
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          echo "Starting stress test..."
+          while true; do
+            # Generate HTTP load
+            for i in $(seq 1 50); do
+              wget -q -O- http://vproapp-service:8080/ &
+            done
+            sleep 1
+          done
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stress-test-service
+  namespace: vprofile
+spec:
+  selector:
+    app: stress-test
+  ports:
+  - port: 80

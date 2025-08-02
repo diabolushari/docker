@@ -3,7 +3,7 @@
 FROM tomcat:9.0
 
 # Copy WAR file
-COPY vprofile-v2.war /usr/local/tomcat/webapps/vprofile.war
+COPY vprofile-v2.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 
