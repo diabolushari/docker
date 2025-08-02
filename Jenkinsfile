@@ -34,7 +34,6 @@ pipeline{
             steps {
                 bat 'copy target\\*.war D:\\Study\\P1\\Myartifacts\\'
                 bat 'copy target\\vprofile-v2.war Docker-files\\app\\ROOT.war'
-                bat 'copy target\\vprofile-v2.war /usr/local/tomcat/webapps/ROOT.war'
             }
         }
         stage('Prepare WAR for Docker') {
