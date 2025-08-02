@@ -31,8 +31,10 @@ services:
     container_name: vproapp
     ports:
       - "8081:8080"
-    volumes:
-      - vproappdata:/usr/local/tomcat/webapps
+    depends_on:
+      - vprodb
+      - vprocache01
+      - vpromq01
     
   vproweb:
     build: 
