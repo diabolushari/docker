@@ -60,6 +60,7 @@ pipeline{
         
         stage('Build Docker Images for K8s') {
             steps {
+                bat 'copy target\\vprofile-v2.war Docker-files\\app\\vprofile-v2.war'
                 bat 'docker build -t vprocontainers/vprofileapp:%BUILD_NUMBER% -f Docker-files/app/Dockerfile .'
                 bat 'docker build -t vprocontainers/vprofiledb:%BUILD_NUMBER% -f Docker-files/db/Dockerfile .'
                 bat 'docker build -t vprocontainers/vprofileweb:%BUILD_NUMBER% -f Docker-files/web/Dockerfile .'
