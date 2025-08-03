@@ -57,6 +57,9 @@ services:
     container_name: vproweb
     ports:
       - "80:80"
+    depends_on:
+      - vproapp
+    restart: unless-stopped
 
 volumes:
    vprodbdata: {}
