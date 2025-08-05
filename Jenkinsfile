@@ -7,6 +7,7 @@ pipeline{
         DOCKER_IMAGE = "vpro-app-image"
         CONTAINER_NAME = "vpro-container"
         WAR_DEST_PATH = "Docker-files/app"
+        KUBECONFIG = "C:\\Users\\Harikrishnan B S\\.kube\\config"
     }
 
     stages {
@@ -61,26 +62,31 @@ pipeline{
         stage('Build Docker Images for K8s') {
             steps {
                 bat 'copy target\\vprofile-v2.war Docker-files\\app\\vprofile-v2.war'
-                bat "docker build -t vprocontainers/vprofileapp:latest -f Docker-files/app/Dockerfile Docker-files/app"
-                bat "docker build -t vprocontainers/vprofiledb:latest -f Docker-files/db/Dockerfile Docker-files/db"
-                bat "docker build -t vprocontainers/vprofileweb:latest -f Docker-files/web/Dockerfile Docker-files/web"
+                bat "docker build -t diabolus6/vprofileapp:latest -f Docker-files/app/Dockerfile Docker-files/app"
+                bat "docker build -t diabolus6/vprofiledb:latest -f Docker-files/db/Dockerfile Docker-files/db"
+                bat "docker build -t diabolus6/vprofileweb:latest -f Docker-files/web/Dockerfile Docker-files/web"
             }
         }
-        
-        stage('Push to Registry') {
+
+        stage('Debug K8s Access') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Docker_ID', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push vprocontainers/vprofileapp:%BUILD_NUMBER%'
-                    bat 'docker push vprocontainers/vprofiledb:%BUILD_NUMBER%'
-                    bat 'docker push vprocontainers/vprofileweb:%BUILD_NUMBER%'
-                }
+                bat 'kubectl config get-contexts'
+                bat 'kubectl cluster-info'
+            }
+        }
+
+        stage('Push Docker Images to Docker Hub') {
+            steps {
+                bat "docker login -u diabolus6 -p Stuffoli@123"
+                bat "docker push diabolus6/vprofileapp:latest"
+                bat "docker push diabolus6/vprofiledb:latest"
+                bat "docker push diabolus6/vprofileweb:latest"
             }
         }
         
         stage('Deploy to Kubernetes') {
             steps {
-                bat 'kubectl apply -f k8s/namespace.yaml'
+                bat 'kubectl apply -f k8s/namespace.yaml --validate=false'
                 bat 'kubectl apply -f k8s/mysql-deployment.yaml'
                 bat 'kubectl apply -f k8s/memcached-deployment.yaml'
                 bat 'kubectl apply -f k8s/rabbitmq-deployment.yaml'
@@ -94,7 +100,8 @@ pipeline{
                 bat 'kubectl get hpa -n vprofile'
                 bat 'kubectl get pods -n vprofile'
                 bat 'kubectl apply -f k8s/load-test.yaml'
-                bat 'timeout 30 && kubectl get hpa vproapp-hpa -n vprofile'
+                bat 'ping -n 31 127.0.0.1 > nul'
+                bat 'kubectl get hpa vproapp-hpa -n vprofile'
             }
         }
     }    
